@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Přihlášení na DOD</title>
+    <style>
+        :root{--bg:#fafaf7;--fg:#1c1c1a;--muted:#5c5c57;--line:#d9d8d0}
+        @media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#f1f0ea;--muted:#a3a29a;--line:#3a3a37}}
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+        main{max-width:24rem;margin:0 auto;padding:clamp(3rem,12vh,7rem) 1.5rem}
+        h1{font-size:2.25rem;letter-spacing:-.03em;margin:0 0 1.5rem}
+        input,button{width:100%;font:inherit;padding:.75rem 1rem;margin-bottom:.75rem;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--fg)}
+        button{background:var(--fg);color:var(--bg);border:0;cursor:pointer;font-weight:600}
+        button.secondary{background:transparent;color:var(--fg);border:1px solid var(--line)}
+        #msg{color:var(--muted);min-height:1.5rem}
+        #app{display:none}
+    </style>
+</head>
+<body>
+<main>
+    <div id="auth">
+        <h1>Přihlášení</h1>
+        <input id="email" type="email" placeholder="E-mail" autocomplete="email">
+        <input id="password" type="password" placeholder="Heslo (min. 6 znaků)" autocomplete="current-password">
+        <button id="login">Přihlásit se</button>
+        <button id="signup" class="secondary">Vytvořit účet</button>
+    </div>
+    <div id="app">
+        <h1>Vítej zpátky.</h1>
+        <h1>Jsi přihlášen.</h1>
+        <p>Tohle vidí jen přihlášený uživatel. Text si přepiš podle sebe.</p>
+        <button id="logout" class="secondary">Odhlásit se</button>
+    </div>
+    <p id="msg"></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+    // Vlož své hodnoty z Supabase: Project Settings → API
+    const SUPABASE_URL = "https://TVUJ-PROJEKT.supabase.co";
+    const SUPABASE_ANON_KEY = "TVUJ-ANON-PUBLIC-KLIC";
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const $ = id => document.getElementById(id);
+    const say = t => $("msg").textContent = t;
+
+    function render(session){
+        $("auth").style.display = session ? "none" : "block";
+        $("app").style.display = session ? "block" : "none";
+    }
+
+    $("signup").onclick = async () => {
+        const { error } = await db.auth.signUp({ email: $("email").value, password: $("password").value });
+        say(error ? error.message : "Účet vytvořen. Zkontroluj e-mail a potvrď registraci.");
+    };
+
+    $("login").onclick = async () => {
+        const { error } = await db.auth.signInWithPassword({ email: $("email").value, password: $("password").value });
+        say(error ? error.message : "");
+    };
+
+    $("logout").onclick = () => db.auth.signOut();
+
+    db.auth.onAuthStateChange((_event, session) => render(session));
+    db.auth.getSession().then(({ data }) => render(data.session));
+</script>
+</body>
+</html>
