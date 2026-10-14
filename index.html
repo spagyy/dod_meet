@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Přihlášení na DOD</title>
+    <title>DOD Orbis</title>
     <style>
         :root{--bg:#fafaf7;--fg:#1c1c1a;--muted:#5c5c57;--line:#d9d8d0}
         @media (prefers-color-scheme:dark){:root{--bg:#161615;--fg:#f1f0ea;--muted:#a3a29a;--line:#3a3a37}}
@@ -22,15 +22,17 @@
 <main>
     <div id="auth">
         <h1>Přihlášení</h1>
-        <input id="email" type="email" placeholder="E-mail" autocomplete="email">
-        <input id="password" type="password" placeholder="Heslo (min. 6 znaků)" autocomplete="current-password">
+        <input id="username" type="text" placeholder="Jméno" autocomplete="username">
+        <input id="password" type="password" placeholder="Heslo" autocomplete="current-password">
         <button id="login">Přihlásit se</button>
-        <button id="signup" class="secondary">Vytvořit účet</button>
     </div>
     <div id="app">
         <h1>Vítej zpátky.</h1>
-        <h1>Jsi přihlášen.</h1>
-        <p>Tohle vidí jen přihlášený uživatel. Text si přepiš podle sebe.</p>
+        <h1>První patro</h1>
+        <p>- Máme moderně vybavené jak odborné tak i normalní třídy</p>
+        <p>- Máme tři počítačové učebnyz toho jsou dvě s operačním systémem windows a jedna nově zrekonstruovaná s MacOS </p>
+
+
         <button id="logout" class="secondary">Odhlásit se</button>
     </div>
     <p id="msg"></p>
@@ -39,26 +41,30 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
     // Vlož své hodnoty z Supabase: Project Settings → API
-    const SUPABASE_URL = "https://TVUJ-PROJEKT.supabase.co";
-    const SUPABASE_ANON_KEY = "TVUJ-ANON-PUBLIC-KLIC";
+    const SUPABASE_URL = "https://mkemiulvkztparjeouis.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rZW1pdWx2a3p0cGFyamVvdWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODczODksImV4cCI6MjEwNzQ2MzM4OX0.nxRytqeZih1DjJ9IyRiZY9I9mXXjp33iPpqFcFtH6NM";
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = id => document.getElementById(id);
     const say = t => $("msg").textContent = t;
+
+    const toEmail = name => {
+        const clean = name.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9._-]/g, "");
+        return clean ? clean + "@example.com" : "";
+    };
 
     function render(session){
         $("auth").style.display = session ? "none" : "block";
         $("app").style.display = session ? "block" : "none";
     }
 
-    $("signup").onclick = async () => {
-        const { error } = await db.auth.signUp({ email: $("email").value, password: $("password").value });
-        say(error ? error.message : "Účet vytvořen. Zkontroluj e-mail a potvrď registraci.");
-    };
-
     $("login").onclick = async () => {
-        const { error } = await db.auth.signInWithPassword({ email: $("email").value, password: $("password").value });
-        say(error ? error.message : "");
+        const email = toEmail($("username").value);
+        if (!email) return say("Zadej jméno.");
+        const { error } = await db.auth.signInWithPassword({ email, password: $("password").value });
+        say(error ? "Špatné jméno nebo heslo." : "");
     };
 
     $("logout").onclick = () => db.auth.signOut();
